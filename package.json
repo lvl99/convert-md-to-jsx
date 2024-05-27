@@ -1,5 +1,6 @@
 {
-  "name": "md-to-jsx",
+  "name": "convert-md-to-jsx",
+  "version": "0.1.0",
   "type": "module",
   "module": "dist/index",
   "scripts": {

@@ -1,4 +1,4 @@
-# md-to-jsx
+# convert-md-to-jsx
 
 Copyright 2024 Matt Scheurich
 
