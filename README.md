@@ -29,8 +29,7 @@ If you want to specify different JSX components for AST Node types:
 
 ```js
 import { memo } from "react";
-import convert from "md-to-jsx";
-import { DEFAULT_NODE_MAP } from "md-to-jsx/lib/index.jsx";
+import convert, { DEFAULT_NODE_MAP } from "md-to-jsx";
 
 const nodeMap = {
   ...DEFAULT_NODE_MAP,
