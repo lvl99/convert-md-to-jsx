@@ -21,7 +21,7 @@ yarn add convert-md-to-jsx
 Import into your project and use it to convert Markdown formatted content (as string) to JSX:
 
 ```js
-import { memo } from "react";
+import React, { memo } from "react";
 import convert from "convert-md-to-jsx";
 
 const RenderMarkdown = memo(({ markdown }) => convert(markdown));
@@ -30,7 +30,7 @@ const RenderMarkdown = memo(({ markdown }) => convert(markdown));
 If you want to specify different JSX components for AST Node types:
 
 ```js
-import { memo } from "react";
+import React, { memo } from "react";
 import convert, { DEFAULT_NODE_MAP } from "convert-md-to-jsx";
 
 const nodeMap = {
@@ -50,6 +50,10 @@ const RenderMarkdown = memo(({ markdown }) => convert(markdown, nodeMap));
 Got cool ideas? Have questions or feedback? Found a bug? [Post an issue](https://github.com/lvl99/convert-md-to-jsx/issues)
 
 Added a feature? Fixed a bug? [Post a PR](https://github.com/lvl99/convert-md-to-jsx/compare)
+
+### TODO
+
+- [ ] Decouple from React
 
 ## License
 

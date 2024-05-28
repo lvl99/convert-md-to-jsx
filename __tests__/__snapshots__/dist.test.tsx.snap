@@ -1,0 +1,6 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`react > should render MD to JSX to HTML 1`] = `
+"<h1>Heading 1</h1><p>This is a <a href="https://www.google.com">test</a>.</p><p>Some <em>text</em> <strong>formatting</strong> <em><strong>here</strong></em>. <s>Ignore this!</s> =Look at this!=</p><hr/><h2>Heading 2</h2><h3>Heading 3</h3><h4>Heading 4</h4><h5>Heading 5</h5><h6>Heading 6</h6><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><ol><li>Item 1</li><li>Item 2</li><li>Item 3</li></ol><blockquote><p>Blockquote</p></blockquote><p>HTML code: &lt;img src=&quot;https://placehold.it/600x600&quot;&gt;</p><p><img src="https://placehold.it/600x600" title=""/></p><p>This is <code>inline code</code>.</p><pre><code>This is a code block.</code></pre><h1>GFM</h1><ul><li><input type="checkbox" disabled=""/>Unchecked item</li><li><input type="checkbox" disabled="" checked=""/>Checked item</li></ul><table><tr><td>Column</td><td>Column</td></tr><tr><td>Cell</td><td>Cell</td></tr></table><p>Here&#x27;s my footnote in use<sup><a href="#fn-def-1">1</a></sup>.</p><p>Term
+: Definition</p><p id="fn-def-1">1: This is the footnote definition.</p>"
+`;

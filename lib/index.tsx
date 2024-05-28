@@ -1,4 +1,4 @@
-import { ReactNode, ComponentType, createElement } from "react";
+import React, { ReactNode, ComponentType, createElement } from "react";
 import {
   BlockContentMap,
   Blockquote,
@@ -32,6 +32,8 @@ import {
   ThematicBreak,
   Yaml,
 } from "mdast";
+import { gfm } from "micromark-extension-gfm";
+import { gfmFromMarkdown } from "mdast-util-gfm";
 import { fromMarkdown } from "mdast-util-from-markdown";
 
 export interface GenericProps {
@@ -77,6 +79,7 @@ export type ASTNode =
 
 export interface ASTNodeProps {
   node: ASTNode;
+  parentNode?: ASTNode;
   children?: ReactNode[] | null;
 }
 
@@ -87,18 +90,33 @@ export interface ASTNodeMap {
 export const DEFAULT_NODE_MAP: ASTNodeMap = Object.freeze({
   blockquote: ({ children }) => <blockquote>{children}</blockquote>,
   break: () => <br />,
-  code: ({ children }) => (
-    <pre>
-      <code>{children}</code>
-    </pre>
-  ),
+  code: ({ node }) =>
+    ("value" in node && (
+      <pre>
+        <code>{node.value}</code>
+      </pre>
+    )) ||
+    null,
   definition: () => null,
   delete: ({ children }) => <s>{children}</s>,
   emphasis: ({ children }) => <em>{children}</em>,
-  footnoteDefinition: ({ children }) => <p>{children}</p>,
-  footnoteReference: () => null,
+  footnoteReference: ({ node }) =>
+    ("identifier" in node && (
+      <sup>
+        <a href={"#fn-def-" + node.identifier}>
+          {("label" in node && node.label) || node.identifier}
+        </a>
+      </sup>
+    )) ||
+    null,
+  footnoteDefinition: ({ node, children }) =>
+    "identifier" in node && (
+      <p id={"fn-def-" + node.identifier}>
+        {("label" in node && node.label) || node.identifier}: {children}
+      </p>
+    ),
   heading: ({ node, children }) => {
-    const depth = "depth" in node ? node.depth : 1;
+    const depth = ("depth" in node && node.depth) || 1;
     switch (depth) {
       case 1:
         return <h1>{children}</h1>;
@@ -116,87 +134,93 @@ export const DEFAULT_NODE_MAP: ASTNodeMap = Object.freeze({
         return <p>{children}</p>;
     }
   },
-  html: ({ children }) => children,
-  image: ({ node }) => (
-    <img
-      src={"url" in node ? node.url : ""}
-      title={"title" in node ? node.title || "" : ""}
-    />
-  ),
+  html: ({ node }) => ("value" in node && node.value) || null,
+  image: ({ node }) =>
+    ("url" in node && (
+      <img src={node.url} title={"title" in node ? node.title || "" : ""} />
+    )) ||
+    null,
   imageReference: () => null,
-  inlineCode: ({ children }) => <code>{children}</code>,
+  inlineCode: ({ node }) =>
+    ("value" in node && <code>{node.value}</code>) || null,
   link: ({ node, children }) =>
     "url" in node ? <a href={node.url}>{children}</a> : children,
   linkReference: () => null,
   list: ({ node, children }) => {
-    const ordered = "ordered" in node;
+    const ordered = "ordered" in node && node.ordered;
     if (ordered) {
       return <ol>{children}</ol>;
     } else {
       return <ul>{children}</ul>;
     }
   },
-  listItem: ({ node, children }) => (
+  listItem: ({ node, parentNode, children }) => (
     <li>
-      {"checked" in node && typeof node.checked === "boolean" ? (
-        <input type="checkbox" checked={node.checked} />
-      ) : null}
+      {"checked" in node && typeof node.checked === "boolean"
+        ? (node.checked && (
+            <input type="checkbox" checked={node.checked} disabled={true} />
+          )) || <input type="checkbox" disabled={true} />
+        : null}
       {children}
     </li>
   ),
-  paragraph: ({ children }) => <p>{children}</p>,
+  paragraph: ({ parentNode, children }) =>
+    parentNode?.type === "listItem" ||
+    parentNode?.type === "footnoteDefinition" ? (
+      children
+    ) : (
+      <p>{children}</p>
+    ),
   root: ({ children }) => <>{children}</>,
   strong: ({ children }) => <strong>{children}</strong>,
   table: ({ children }) => <table>{children}</table>,
   tableRow: ({ children }) => <tr>{children}</tr>,
   tableCell: ({ children }) => <td>{children}</td>,
-  text: ({ children }) => <>{children}</>,
+  text: ({ node }) => ("value" in node && node.value) || null,
   thematicBreak: () => <hr />,
-  yaml: ({ node, children }) => (
-    <>
-      {"value" in node ? (
-        <pre>
-          <code>
-            {node.value}
-            {children}
-          </code>
-        </pre>
-      ) : null}
-      {children}
-    </>
-  ),
+  yaml: ({ node }) =>
+    ("value" in node && (
+      <pre>
+        <code>{node.value}</code>
+      </pre>
+    )) ||
+    null,
 });
 
 /**
  * Convert AST Node to React Component
  */
 export const convertNodeToJSX = (
-  input: ASTNode,
+  node: ASTNode,
   nodeMap: ASTNodeMap = DEFAULT_NODE_MAP,
+  parentNode?: ASTNode,
 ): JSXNode => {
-  if (input.type in nodeMap) {
-    const element = nodeMap[input.type];
-    if ("children" in input) {
-      const children = Array.from(input.children).map((childNode: ASTNode) =>
-        convertNodeToJSX(childNode, nodeMap),
+  if (node.type in nodeMap) {
+    const element = nodeMap[node.type];
+    if ("children" in node) {
+      const children = Array.from(node.children).map((childNode: ASTNode) =>
+        convertNodeToJSX(childNode, nodeMap, node),
       );
-      return createElement(element, { node: input }, ...children);
+      return createElement(element, { node, parentNode }, ...children);
     } else {
-      return createElement(element, { node: input });
+      return createElement(element, { node, parentNode });
     }
   } else {
-    throw new Error(`ASTNode transformer not mapped for type: ${input.type}`);
+    throw new Error(`ASTNode transformer not mapped for type: ${node.type}`);
   }
 };
 
 /**
- * Convert MD input to JSX (ReactNode).
+ * Convert MD node to JSX (ReactNode).
  */
 export const convertMDToJSX = (
-  input: string,
+  node: string,
   nodeMap: ASTNodeMap = DEFAULT_NODE_MAP,
 ) => {
-  const root = fromMarkdown(input);
+  const root = fromMarkdown(node, {
+    extensions: [gfm()],
+    mdastExtensions: [gfmFromMarkdown()],
+  });
   const output = convertNodeToJSX(root, nodeMap);
   return output;
 };
