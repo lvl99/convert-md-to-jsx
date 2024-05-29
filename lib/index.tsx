@@ -1,4 +1,4 @@
-import React, { ReactNode, ComponentType, createElement } from "react";
+import React, { createElement, JSX } from "react";
 import {
   BlockContentMap,
   Blockquote,
@@ -40,8 +40,8 @@ export interface GenericProps {
   [key: string]: unknown;
 }
 
-export type JSXComponent<P = {}> = ComponentType<P>;
-export type JSXNode = ReactNode;
+export type JSXComponent = JSX.ElementType;
+export type JSXNode = JSX.Element;
 
 export type ASTNodeType =
   | keyof BlockContentMap
@@ -80,11 +80,11 @@ export type ASTNode =
 export interface ASTNodeProps {
   node: ASTNode;
   parentNode?: ASTNode;
-  children?: ReactNode[] | null;
+  children?: JSXNode[] | null;
 }
 
 export interface ASTNodeMap {
-  [key: string]: JSXComponent<ASTNodeProps>;
+  [key: string]: JSXComponent;
 }
 
 export const DEFAULT_NODE_MAP: ASTNodeMap = Object.freeze({
